@@ -3,6 +3,7 @@
 Plugin Name: Contact Form 7 Real E-mail Validation
 Version: 1.0
 Author: sahbaj
+Author URI: http://www.bglobalsourcing.com/
 License: GPL
 Author: Sahbaj
 Description: An add-on for Contact Form 7 that valided an email field whether it is real or not using <a href="https://neverbounce.com/help/api/getting-started-with-the-api/" target="_blank">neverbounce API</a> 
@@ -13,7 +14,7 @@ if (!defined('WPINC')) { die; }
 
 define( 'WPCF7CFV_VERSION', '1.0' );
 
-define( 'WPCF7CFV_REQUIRED_WPCF7_VERSION', '4.0' );
+define( 'WPCF7CFV_REQUIRED_WPCF7_VERSION', '4.1' );
 
 $dir = plugin_dir_path( __FILE__ )."NeverBounceAPI-PHP-master/src/api/";
 $files[] = 	$dir."NB_Curl.php";
@@ -32,6 +33,7 @@ new wpcf7_bg_real_email_validation();
 class wpcf7_bg_real_email_validation{
 	
 	public function __construct() {		
+		$this->check_cf7_is_install();
 		//add filter for text field validation
 		add_filter('wpcf7_validate_email', array($this, 'cf7cfv_custom_form_validation'), 10, 2); // text field
 		add_filter('wpcf7_validate_email*', array($this, 'cf7cfv_custom_form_validation'), 10, 2); // Req. text field
@@ -40,8 +42,7 @@ class wpcf7_bg_real_email_validation{
 		add_action( 'admin_init', array($this,'cf7cfv_api_display_options') );
 	}
 	
-	function cf7cfv_api_display_options() {		 
-        $this->check_cf7_is_install();
+	function cf7cfv_api_display_options() {		         
 		add_settings_section( 'cf7cfv_keys_section', '', array($this,'cf7cfv_api_content'), 'cf7cfv_api_options' );
 		add_settings_field( 'cf7cfv_api_key', 'API KEY', array($this, 'cf7cfv_api_key_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
 		add_settings_field( 'cf7cfv_api_secret_key', 'API SECRET KEY', array($this, 'cf7cfv_api_secret_key_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
@@ -101,8 +102,8 @@ class wpcf7_bg_real_email_validation{
 	}
 	
 	function check_cf7_is_install() {
-        // Check if CF7 is installed
-        if (!defined('WPCF7_VERSION')) {
+        // Check if CF7 is installed        
+        if (!defined('WPCF7_VERSION') || version_compare( WPCF7_VERSION, WPCF7CFV_REQUIRED_WPCF7_VERSION, '<' )) {
             // Display notice that CF7 is required
             add_action('admin_notices', array($this, 'show_cf7_required_notice'));
             return;
