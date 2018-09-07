@@ -31,9 +31,10 @@ foreach ( $files as $file ) {
 new wpcf7_bg_real_email_validation();
 
 class wpcf7_bg_real_email_validation{
-	
-	public function __construct() {		
-		$this->check_cf7_is_install();
+
+	public function __construct() {
+		//check if Contact Form 7 is active and if its version is adeguate
+		add_action('admin_init', array($this, 'check_cf7_is_install'));
 		//add filter for text field validation
 		add_filter('wpcf7_validate_email', array($this, 'cf7cfv_custom_form_validation'), 10, 2); // text field
 		add_filter('wpcf7_validate_email*', array($this, 'cf7cfv_custom_form_validation'), 10, 2); // Req. text field
