@@ -35,6 +35,7 @@ class wpcf7_bg_real_email_validation{
 	public function __construct() {
 		//check if Contact Form 7 is active and if its version is adeguate
 		add_action('admin_init', array($this, 'check_cf7_is_install'));
+		add_action('admin_init', array($this, 'check_API_key_is_saved'));
 		//add filter for text field validation
 		add_filter('wpcf7_validate_email', array($this, 'cf7cfv_custom_form_validation'), 10, 2); // text field
 		add_filter('wpcf7_validate_email*', array($this, 'cf7cfv_custom_form_validation'), 10, 2); // Req. text field
@@ -85,18 +86,22 @@ class wpcf7_bg_real_email_validation{
 		$api_key = get_option( 'cf7cfv_api_key' );
 		$api_secret_key = get_option( 'cf7cfv_api_secret_key' );
 		$catchall_is_valid = get_option( 'cf7cfv_catchall_as_valid' );
-		\NeverBounce\API\NB_Auth::auth($api_secret_key, $api_key);
-		$email = \NeverBounce\API\NB_Single::app()->verify($email);
-		if( $email->is(0)  ){
-			return true;
-		}
-		elseif ( $email->is(3) && 1 == $catchall_is_valid ) {
-			return true;
-		}
-		else {
-			return false;
+
+		if ( strlen( $api_key ) > 0 && strlen( $api_secret_key ) > 0 ){
+			\NeverBounce\API\NB_Auth::auth($api_secret_key, $api_key);
+			$email = \NeverBounce\API\NB_Single::app()->verify($email);
+			if( $email->is(0)  ){
+				return true;
+			}
+			elseif ( $email->is(3) && 1 == $catchall_is_valid ) {
+				return true;
+			}
+			else {
+				return false;
+			}
 		}
 
+		return true;
 	}
 
 	function cf7cfv_api_content() {
@@ -124,11 +129,28 @@ class wpcf7_bg_real_email_validation{
 		}
 	}
 
+	function check_API_key_is_saved() {
+		$api_key = get_option( 'cf7cfv_api_key' );
+		$api_secret_key = get_option( 'cf7cfv_api_secret_key' );
+		if ( strlen( $api_key ) == 0 || strlen( $api_secret_key ) == 0 ){
+            add_action('admin_notices', array($this, 'show_save_apikey_notice'));
+            return;
+		}
+	}
+
 	function show_cf7_required_notice() {
 		$plugin_data = get_plugin_data(__FILE__);
             echo '
         <div class="notice notice-error is-dismissible">
           <p>' . sprintf(__('<strong>%s</strong> requires <strong><a href="'.admin_url('plugin-install.php?tab=search&s=contact+form+7').'" target="_blank">Contact Form 7</a></strong> plugin to be installed and activated on your site.', 'vc_extend'), $plugin_data['Name']) . '</p>
+        </div>';
+    }
+
+	function show_save_apikey_notice() {
+		$plugin_data = get_plugin_data(__FILE__);
+            echo '
+        <div class="notice notice-error is-dismissible">
+          <p>' . sprintf(__('<strong>%s</strong>: Please save your Neverbounce API keys in order to enable real email verification in your forms.', 'vc_extend'), $plugin_data['Name']) . '</p>
         </div>';
     }
 
