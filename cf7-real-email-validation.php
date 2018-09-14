@@ -1,11 +1,10 @@
 <?php
 /*
-Plugin Name: Contact Form 7 Real E-mail Validation
-Version: 1.0
-Author: sahbaj
-Author URI: http://www.bglobalsourcing.com/
+Plugin Name: Contact Form 7 Real E-mail Validation using Neverbounce
+Version: 2.0
+Author: garubi
 License: GPL
-Author: Sahbaj
+Plugin URI: https://github.com/garubi/cf7-real-email-validation
 Description: An add-on for Contact Form 7 that valided an email field whether it is real or not using <a href="https://neverbounce.com/help/api/getting-started-with-the-api/" target="_blank">neverbounce API</a>
 */
 
