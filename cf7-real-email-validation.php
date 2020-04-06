@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Contact Form 7 Real E-mail Validation using Neverbounce
-Version: 2.0
+Version: 3.0
 Author: garubi
 License: GPL
 Plugin URI: https://github.com/garubi/cf7-real-email-validation
-Description: An add-on for Contact Form 7 that valided an email field whether it is real or not using <a href="https://neverbounce.com/help/api/getting-started-with-the-api/" target="_blank">neverbounce API</a>
+Description: An add-on for Contact Form 7 that validate an email field whether it is real or not using <a href="https://neverbounce.com/help/api/getting-started-with-the-api/" target="_blank">neverbounce API</a>. V 3 is updated to use the v4 API
 */
 
 // If this file is called directly, abort.
@@ -15,17 +15,17 @@ define( 'WPCF7CFV_VERSION', '1.0' );
 
 define( 'WPCF7CFV_REQUIRED_WPCF7_VERSION', '4.1' );
 
-$dir = plugin_dir_path( __FILE__ )."NeverBounceAPI-PHP-master/src/api/";
-$files[] = 	$dir."NB_Curl.php";
-$files[] = 	$dir."NB_Auth.php";
-$files[] = 	$dir."NB_App.php";
-$files[] = 	$dir."NB_Account.php";
-$files[] = 	$dir."NB_Exception.php";
-$files[] = 	$dir."NB_Job.php";
-$files[] = 	$dir."NB_Single.php";
-foreach ( $files as $file ) {
-	require_once( $file);
-}
+// $dir = plugin_dir_path( __FILE__ )."NeverBounceAPI-PHP-4.3.0/src/api/";
+// $files[] = 	$dir."NB_Curl.php";
+// $files[] = 	$dir."NB_Auth.php";
+// $files[] = 	$dir."NB_App.php";
+// $files[] = 	$dir."NB_Account.php";
+// $files[] = 	$dir."NB_Exception.php";
+// $files[] = 	$dir."NB_Job.php";
+// $files[] = 	$dir."NB_Single.php";
+// foreach ( $files as $file ) {
+// 	require_once( $file);
+// }
 
 new wpcf7_bg_real_email_validation();
 
@@ -46,10 +46,10 @@ class wpcf7_bg_real_email_validation{
 	function cf7cfv_api_display_options() {
 		add_settings_section( 'cf7cfv_keys_section', '', array($this,'cf7cfv_api_content'), 'cf7cfv_api_options' );
 		add_settings_field( 'cf7cfv_api_key', 'API KEY', array($this, 'cf7cfv_api_key_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
-		add_settings_field( 'cf7cfv_api_secret_key', 'API SECRET KEY', array($this, 'cf7cfv_api_secret_key_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
+		// add_settings_field( 'cf7cfv_api_secret_key', 'API SECRET KEY', array($this, 'cf7cfv_api_secret_key_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
 		add_settings_field( 'cf7cfv_catchall_as_valid', 'Consider CatchAll emails as valid emails', array($this, 'cf7cfv_catchall_as_valid_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
 		register_setting( 'cf7cfv_keys_section', 'cf7cfv_api_key' );
-		register_setting( 'cf7cfv_keys_section', 'cf7cfv_api_secret_key' );
+		// register_setting( 'cf7cfv_keys_section', 'cf7cfv_api_secret_key' );
 		register_setting( 'cf7cfv_keys_section', 'cf7cfv_catchall_as_valid' );
 	}
 
@@ -83,21 +83,37 @@ class wpcf7_bg_real_email_validation{
 
 	function bg_check_is_real_email($email){
 		$api_key = get_option( 'cf7cfv_api_key' );
-		$api_secret_key = get_option( 'cf7cfv_api_secret_key' );
+
 		$catchall_is_valid = get_option( 'cf7cfv_catchall_as_valid' );
 
-		if ( strlen( $api_key ) > 0 && strlen( $api_secret_key ) > 0 ){
-			\NeverBounce\API\NB_Auth::auth($api_secret_key, $api_key);
-			$email = \NeverBounce\API\NB_Single::app()->verify($email);
-			if( $email->is(0)  ){
+		if ( strlen( $api_key ) > 0 ){
+
+  			write_log($api_key);
+  			$response = wp_remote_post('https://api.neverbounce.com/v4/single/check', array('body'=>array('key' => $api_key, 'email' => $email)) );
+			$http_code = wp_remote_retrieve_response_code( $response );
+			$body = wp_remote_retrieve_body( $response );
+			write_log($body);
+			// write_log($response);
+			// write_log($http_code);
+
+			if( $http_code != 200 ) return true; // if Neverbounce can't answer we keep collecting this email
+
+
+			$body = json_decode( $body, $assoc_array = false );
+			if( 'success' != $body->status ) return true; // if we have problems with Neverbounce we keep collecting this email
+
+			$result = $body->result;
+
+			if( 'valid' == $result || 'unknown' == $result ){
 				return true;
 			}
-			elseif ( $email->is(3) && 1 == $catchall_is_valid ) {
+			elseif( 'catchall' == $result && 1 == $catchall_is_valid  ){
 				return true;
 			}
 			else {
 				return false;
 			}
+
 		}
 
 		return true;
@@ -130,8 +146,9 @@ class wpcf7_bg_real_email_validation{
 
 	function check_API_key_is_saved() {
 		$api_key = get_option( 'cf7cfv_api_key' );
-		$api_secret_key = get_option( 'cf7cfv_api_secret_key' );
-		if ( strlen( $api_key ) == 0 || strlen( $api_secret_key ) == 0 ){
+		// $api_secret_key = get_option( 'cf7cfv_api_secret_key' );
+		// if ( strlen( $api_key ) == 0 || strlen( $api_secret_key ) == 0 ){
+		if ( strlen( $api_key ) == 0 ){
             add_action('admin_notices', array($this, 'show_save_apikey_notice'));
             return;
 		}
@@ -153,4 +170,11 @@ class wpcf7_bg_real_email_validation{
         </div>';
     }
 
+}
+if (!function_exists('write_log')) {
+    function write_log ( $log )  {
+        if ( true === WP_DEBUG ) {
+			error_log(var_export($log,true));
+        }
+    }
 }
