@@ -42,7 +42,7 @@ class wpcf7_bg_real_email_validation{
 	}
 
 	function cf7cfv_create_menu() {
-		add_options_page('NeverBounce integration', 'Never Bounce API', 'administrator', 'cf7cfv_api_options', array($this, 'cf7cfv_settings_page'));
+		add_options_page('NeverBounce integration', 'NeverBounce integration', 'administrator', 'cf7cfv_api_options', array($this, 'cf7cfv_settings_page'));
 	}
 
 	function cf7cfv_settings_page(){
@@ -72,33 +72,50 @@ class wpcf7_bg_real_email_validation{
 		$api_key = get_option( 'cf7cfv_api_key' );
 
 		$catchall_is_valid = get_option( 'cf7cfv_catchall_as_valid' );
-
+		write_log('------------------------ Start Neverbounce log ------------------------');
+		write_log($email);
 		if ( strlen( $api_key ) > 0 ){
 
-  			$response = wp_remote_post('https://api.neverbounce.com/v4/single/check', array('body'=>array('key' => $api_key, 'email' => $email)) );
+  			$response = wp_remote_get('https://api.neverbounce.com/v4/single/check',
+				array(
+					'timeout' => 30,
+					'body'=>array(
+						'key' => $api_key,
+						'email' => $email,
+					))
+			);
+			if( is_wp_error($response)) return true; // if Neverbounce can't answer we keep collecting this email
+
 			$http_code = wp_remote_retrieve_response_code( $response );
 			$body = wp_remote_retrieve_body( $response );
+			write_log($http_code);
 
 			if( $http_code != 200 ) return true; // if Neverbounce can't answer we keep collecting this email
 
-
 			$body = json_decode( $body, $assoc_array = false );
+			write_log($body->status);
+
 			if( 'success' != $body->status ) return true; // if we have problems with Neverbounce we keep collecting this email
 
 			$result = $body->result;
 
+			write_log($body->result);
+
 			if( 'valid' == $result || 'unknown' == $result ){
+				write_log(' valid or unknown');
 				return true;
 			}
 			elseif( 'catchall' == $result && 1 == $catchall_is_valid  ){
+				write_log('catchall ok');
 				return true;
 			}
 			else {
+				write_log('not valid');
 				return false;
 			}
 
 		}
-
+		write_log('invalid strlen api');
 		return true;
 	}
 
@@ -108,10 +125,6 @@ class wpcf7_bg_real_email_validation{
 
 	function cf7cfv_api_key_input() {
 		echo '<input type="text" name="cf7cfv_api_key" id="captcha_site_key" placeholder="Your API username" value="'. get_option( 'cf7cfv_api_key' ) . '" />';
-	}
-
-	function cf7cfv_api_secret_key_input() {
-		echo '<input type="text" name="cf7cfv_api_secret_key" id="captcha_secret_key" placeholder="Your API secret key" value="' . get_option( 'cf7cfv_api_secret_key' ) . '" />';
 	}
 
 	function cf7cfv_catchall_as_valid_input() {
