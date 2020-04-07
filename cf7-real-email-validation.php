@@ -52,7 +52,6 @@ class wpcf7_bg_real_email_validation{
 	function cf7cfv_custom_form_validation($result,$tag) {
 		$tag = new WPCF7_Shortcode( $tag );
 		$name = $tag->name;
-		//$_POST[$name] = 'sahabj';
 		$value = isset( $_POST[$name] )
 			? trim( wp_unslash( strtr( (string) $_POST[$name], "\n", " " ) ) )
 			: '';
@@ -76,13 +75,9 @@ class wpcf7_bg_real_email_validation{
 
 		if ( strlen( $api_key ) > 0 ){
 
-  			// write_log($api_key);
   			$response = wp_remote_post('https://api.neverbounce.com/v4/single/check', array('body'=>array('key' => $api_key, 'email' => $email)) );
 			$http_code = wp_remote_retrieve_response_code( $response );
 			$body = wp_remote_retrieve_body( $response );
-			write_log($body);
-			// write_log($response);
-			// write_log($http_code);
 
 			if( $http_code != 200 ) return true; // if Neverbounce can't answer we keep collecting this email
 
@@ -134,8 +129,6 @@ class wpcf7_bg_real_email_validation{
 
 	function check_API_key_is_saved() {
 		$api_key = get_option( 'cf7cfv_api_key' );
-		// $api_secret_key = get_option( 'cf7cfv_api_secret_key' );
-		// if ( strlen( $api_key ) == 0 || strlen( $api_secret_key ) == 0 ){
 		if ( strlen( $api_key ) == 0 ){
             add_action('admin_notices', array($this, 'show_save_apikey_notice'));
             return;
