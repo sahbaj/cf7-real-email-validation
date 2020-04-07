@@ -5,7 +5,9 @@ Version: 3.0
 Author: garubi
 License: GPL
 Plugin URI: https://github.com/garubi/cf7-real-email-validation
-Description: An add-on for Contact Form 7 that validate an email field whether it is real or not using <a href="https://neverbounce.com/help/api/getting-started-with-the-api/" target="_blank">neverbounce API</a>. V 3 is updated to use the v4 API
+Description: An add-on for Contact Form 7 that validates the email fields on any CF7 form using the online service at <a href="https://neverbounce.com/" target="_blank">Neverbounce</a>. Please note that a valid account and some credits at Neverbounce are rquired.
+GitHub Plugin URI: https://github.com/garubi/cf7-real-email-validation
+GitHub Branch: master
 */
 
 // If this file is called directly, abort.
@@ -14,18 +16,6 @@ if (!defined('WPINC')) { die; }
 define( 'WPCF7CFV_VERSION', '1.0' );
 
 define( 'WPCF7CFV_REQUIRED_WPCF7_VERSION', '4.1' );
-
-// $dir = plugin_dir_path( __FILE__ )."NeverBounceAPI-PHP-4.3.0/src/api/";
-// $files[] = 	$dir."NB_Curl.php";
-// $files[] = 	$dir."NB_Auth.php";
-// $files[] = 	$dir."NB_App.php";
-// $files[] = 	$dir."NB_Account.php";
-// $files[] = 	$dir."NB_Exception.php";
-// $files[] = 	$dir."NB_Job.php";
-// $files[] = 	$dir."NB_Single.php";
-// foreach ( $files as $file ) {
-// 	require_once( $file);
-// }
 
 new wpcf7_bg_real_email_validation();
 
@@ -46,15 +36,13 @@ class wpcf7_bg_real_email_validation{
 	function cf7cfv_api_display_options() {
 		add_settings_section( 'cf7cfv_keys_section', '', array($this,'cf7cfv_api_content'), 'cf7cfv_api_options' );
 		add_settings_field( 'cf7cfv_api_key', 'API KEY', array($this, 'cf7cfv_api_key_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
-		// add_settings_field( 'cf7cfv_api_secret_key', 'API SECRET KEY', array($this, 'cf7cfv_api_secret_key_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
 		add_settings_field( 'cf7cfv_catchall_as_valid', 'Consider CatchAll emails as valid emails', array($this, 'cf7cfv_catchall_as_valid_input'), 'cf7cfv_api_options', 'cf7cfv_keys_section' );
 		register_setting( 'cf7cfv_keys_section', 'cf7cfv_api_key' );
-		// register_setting( 'cf7cfv_keys_section', 'cf7cfv_api_secret_key' );
 		register_setting( 'cf7cfv_keys_section', 'cf7cfv_catchall_as_valid' );
 	}
 
 	function cf7cfv_create_menu() {
-		add_options_page('Never Bounce API', 'Never Bounce API', 'administrator', 'cf7cfv_api_options', array($this, 'cf7cfv_settings_page'));
+		add_options_page('NeverBounce integration', 'Never Bounce API', 'administrator', 'cf7cfv_api_options', array($this, 'cf7cfv_settings_page'));
 	}
 
 	function cf7cfv_settings_page(){
@@ -88,7 +76,7 @@ class wpcf7_bg_real_email_validation{
 
 		if ( strlen( $api_key ) > 0 ){
 
-  			write_log($api_key);
+  			// write_log($api_key);
   			$response = wp_remote_post('https://api.neverbounce.com/v4/single/check', array('body'=>array('key' => $api_key, 'email' => $email)) );
 			$http_code = wp_remote_retrieve_response_code( $response );
 			$body = wp_remote_retrieve_body( $response );
