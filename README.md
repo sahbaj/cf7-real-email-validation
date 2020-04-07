@@ -8,6 +8,9 @@ When a user subit a CF7 form, CF7 sends the user's email to Neverbounce that che
 
 If NeverBounce replies that's ok, the form is submitted. If the address is not valid the user get an error about it.
 
+**Note**
+- The plugins consider *valid* addresses those that Neverbounce marked *valid* or *unknown*
+- You can activate the *'Consider CatchAll emails as valid emails'* option to consider also valid the addresses marked as *catch-all*
 
 <strong>Installation</strong><br>
 
@@ -15,11 +18,9 @@ If NeverBounce replies that's ok, the form is submitted. If the address is not v
 
 2. Confirm that [Contact Form 7 v4.1+](https://wordpress.org/plugins/contact-form-7/) is installed and activated. Then activate this plugin.
 
-3. Go to Never Bounce API page from WP Settings menu.
+3. Go to NeverBounce Integration page from WP Settings menu.
 
-4. Update the settings with API credentials.
-
-5. Check this screenshots for API settings page https://github.com/seekingcoder/cf7-real-email-validation/blob/master/screenshot-1.png
+4. Update the settings with the API key.
 
 <strong>IMPORTANT NOTES</strong><br>
 This plugin will work with Contact Form 7 v4.1 or higher.
